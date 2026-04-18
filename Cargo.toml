@@ -1,0 +1,12 @@
+[package]
+name = "lte_strategy_bridge"
+version = "0.1.0"
+edition = "2021"
+description = "Shared ABI and indicator access types for LivTorgEx dynamic modules"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
