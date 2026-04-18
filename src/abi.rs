@@ -158,13 +158,35 @@ pub struct ModulePositions {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ModuleIndicatorValue {
+    Float(f64),
+    String(String),
+    Direction(Direction),
+    Cross(ModuleIndicatorCross),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ModuleIndicatorCross {
+    Cross,
+    Body,
+    Shadow,
+    No,
+    Above,
+    Below,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleInput {
     pub event: ModuleEvent,
     pub price: f64,
     pub symbol: String,
     pub max_amount: f64,
     pub leverage: i32,
-    pub indicators: BTreeMap<i64, HashMap<String, HashMap<String, f64>>>,
+    /// Indicators: tf_seconds → [all_candles] where each candle is
+    /// [indicator_name → [field → typed value]]
+    /// Values preserve original indicator formats (float/string/enums).
+    pub indicators: BTreeMap<i64, Vec<HashMap<String, HashMap<String, ModuleIndicatorValue>>>>,
     pub positions: ModulePositions,
     pub sug_info: Option<SuggestionInfo>,
     pub state: Option<serde_json::Value>,

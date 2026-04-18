@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 
+use crate::abi::ModuleIndicatorValue;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TimeframeSec {
     Tf1m = 60,
@@ -8,7 +10,6 @@ pub enum TimeframeSec {
     Tf30m = 1800,
     Tf1h = 3600,
     Tf4h = 14400,
-    Tf1d = 86400,
 }
 
 impl TimeframeSec {
@@ -152,12 +153,13 @@ pub struct IndicatorFieldKey {
     pub field: IndicatorField,
 }
 
-pub type IndicatorSnapshot = BTreeMap<i64, HashMap<String, HashMap<String, f64>>>;
+pub type IndicatorSnapshot =
+    BTreeMap<i64, Vec<HashMap<String, HashMap<String, ModuleIndicatorValue>>>>;
 
-pub fn get_value(indicators: &IndicatorSnapshot, key: IndicatorFieldKey) -> Option<f64> {
+pub fn get_value(indicators: &IndicatorSnapshot, key: IndicatorFieldKey) -> Option<&ModuleIndicatorValue> {
     indicators
         .get(&key.timeframe.as_i64())
+        .and_then(|candles| candles.first())
         .and_then(|by_ind| by_ind.get(key.indicator.as_name()))
         .and_then(|fields| fields.get(key.field.as_name()))
-        .copied()
 }
