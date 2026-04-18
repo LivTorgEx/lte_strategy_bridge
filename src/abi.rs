@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
 
-use crate::sug_info::ModuleSugInfo;
+use crate::sug_info::SuggestionInfo;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Direction {
@@ -12,6 +12,101 @@ pub enum Direction {
     Short,
     #[serde(rename = "BOTH")]
     Both,
+}
+
+impl Direction {
+    pub const ALL: [Direction; 3] = [Direction::Long, Direction::Short, Direction::Both];
+
+    pub const fn index(&self) -> usize {
+        match self {
+            Direction::Long => 0,
+            Direction::Short => 1,
+            Direction::Both => 2,
+        }
+    }
+
+    pub fn from_index(index: usize) -> Self {
+        match index {
+            0 => Direction::Long,
+            1 => Direction::Short,
+            _ => Direction::Both,
+        }
+    }
+
+    pub fn factor(&self) -> f64 {
+        match self {
+            Direction::Short => -1.0,
+            _ => 1.0,
+        }
+    }
+
+    pub fn oposite(&self) -> Self {
+        match self {
+            Direction::Short => Direction::Long,
+            Direction::Long => Direction::Short,
+            Direction::Both => Direction::Both,
+        }
+    }
+
+    pub fn is_long(&self) -> bool {
+        self == &Direction::Long
+    }
+
+    pub fn is_short(&self) -> bool {
+        self == &Direction::Short
+    }
+
+    pub fn is_both(&self) -> bool {
+        self == &Direction::Both
+    }
+
+    pub fn is_price_bigger(&self, current_price: &f64, price: &f64) -> bool {
+        match self {
+            Direction::Long => current_price < price,
+            _ => current_price > price,
+        }
+    }
+
+    pub fn from_value(value: f64) -> Self {
+        if value > 0.0 {
+            Direction::Long
+        } else if value < 0.0 {
+            Direction::Short
+        } else {
+            Direction::Both
+        }
+    }
+
+    pub fn fix_between(&self, value: f64) -> f64 {
+        match self {
+            Direction::Long => value,
+            _ => 1.0 - value,
+        }
+    }
+}
+
+impl Default for Direction {
+    fn default() -> Self {
+        Self::Both
+    }
+}
+
+impl From<f64> for Direction {
+    fn from(value: f64) -> Self {
+        Self::from_value(value)
+    }
+}
+
+impl From<i32> for Direction {
+    fn from(value: i32) -> Self {
+        if value > 0 {
+            Direction::Long
+        } else if value < 0 {
+            Direction::Short
+        } else {
+            Direction::Both
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,7 +166,7 @@ pub struct ModuleInput {
     pub leverage: i32,
     pub indicators: BTreeMap<i64, HashMap<String, HashMap<String, f64>>>,
     pub positions: ModulePositions,
-    pub sug_info: Option<ModuleSugInfo>,
+    pub sug_info: Option<SuggestionInfo>,
     pub state: Option<serde_json::Value>,
 }
 

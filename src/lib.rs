@@ -9,4 +9,10 @@ pub use abi::{
 pub use indicator_access::{
     get_value, IndicatorField, IndicatorFieldKey, IndicatorKey, IndicatorSnapshot, TimeframeSec,
 };
-pub use sug_info::{ModuleSugInfo, MovementLite, MovementStatusLite, SugIndicator};
+pub use sug_info::{
+    AlgoSuggestionTradeStatus, LineConsolidationMoveReason, LineConsolidationMoveStatus,
+    LineConsolidationMoveSuggestion, ModuleSugInfo, MovementLite, MovementStatusLite,
+    SugIndicator, SuggestionInfo, SuggestionInfoCandle, SuggestionInfoIndicator,
+    SuggestionInfoOpenInterest, SuggestionInfoOrderBook, SuggestionInfoOrderBookLevel,
+    SuggestionInfoWave, SuggestionKline,
+};
