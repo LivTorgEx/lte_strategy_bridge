@@ -8,5 +8,5 @@ description = "Shared ABI and indicator access types for LivTorgEx dynamic modul
 crate-type = ["rlib"]
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
