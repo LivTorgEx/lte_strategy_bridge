@@ -208,6 +208,24 @@ fn default_order_type() -> String {
     "Market".to_string()
 }
 
+/// A standing limit order placed by the module.
+///
+/// `mark` is the unique stable identifier for this order — the platform uses it
+/// to create the order on first appearance and update the price/amounts on
+/// subsequent ticks.  To cancel the order, include its `mark` in
+/// `ModuleOutput::cancel_orders`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModulePlaceOrder {
+    pub direction: Direction,
+    pub amount_ratio: f64,
+    /// Limit price at which the order should be placed.
+    pub enter_price: f64,
+    pub take_profit: Option<f64>,
+    pub stop_loss: Option<f64>,
+    /// Unique stable identifier — used to create or update the order.
+    pub mark: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleClosePosition {
     pub direction: Direction,
@@ -220,6 +238,12 @@ pub struct ModuleOutput {
     pub open_positions: Vec<ModuleOpenPosition>,
     #[serde(default)]
     pub close_positions: Vec<ModuleClosePosition>,
+    /// Standing limit orders to create or update (matched by `mark`).
+    #[serde(default)]
+    pub place_orders: Vec<ModulePlaceOrder>,
+    /// Marks of standing limit orders to cancel.
+    #[serde(default)]
+    pub cancel_orders: Vec<String>,
     #[serde(default)]
     pub stop_bot: bool,
     pub state: Option<serde_json::Value>,

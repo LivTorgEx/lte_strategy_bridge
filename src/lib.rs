@@ -4,7 +4,7 @@ pub mod sug_info;
 
 pub use abi::{
     Direction, ModuleClosePosition, ModuleEvent, ModuleInput, ModuleOpenPosition, ModuleOutput,
-    ModulePositionSummary, ModulePositions, OrderRole,
+    ModulePlaceOrder, ModulePositionSummary, ModulePositions, OrderRole,
 };
 pub use indicator_access::{
     get_value, IndicatorField, IndicatorFieldKey, IndicatorKey, IndicatorSnapshot, TimeframeSec,
