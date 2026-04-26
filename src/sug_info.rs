@@ -523,7 +523,7 @@ pub struct SuggestionInfo {
     pub system_time: i64,
     pub symbol: String,
     pub symbol_id: i32,
-    pub trade_group_id: i32,
+    pub symbol_key: String,
     pub status: AlgoSuggestionTradeStatus,
     pub price: f64,
     pub candle: SuggestionInfoCandle,
