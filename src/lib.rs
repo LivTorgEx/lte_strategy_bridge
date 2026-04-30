@@ -11,8 +11,7 @@ pub use indicator_access::{
 };
 pub use sug_info::{
     AlgoSuggestionTradeStatus, LineConsolidationMoveReason, LineConsolidationMoveStatus,
-    LineConsolidationMoveSuggestion, ModuleSugInfo, MovementLite, MovementStatusLite,
-    SugIndicator, SuggestionInfo, SuggestionInfoCandle, SuggestionInfoIndicator,
-    SuggestionInfoOpenInterest, SuggestionInfoOrderBook, SuggestionInfoOrderBookLevel,
-    SuggestionInfoWave, SuggestionKline,
+    LineConsolidationMoveSuggestion, ModuleSugInfo, MovementLite, MovementStatusLite, SugIndicator,
+    SuggestionInfo, SuggestionInfoCandle, SuggestionInfoIndicator, SuggestionInfoOpenInterest,
+    SuggestionInfoOrderBook, SuggestionInfoOrderBookLevel, SuggestionInfoWave, SuggestionKline,
 };

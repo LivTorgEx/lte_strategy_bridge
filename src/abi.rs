@@ -113,7 +113,9 @@ impl From<i32> for Direction {
 #[serde(rename_all = "snake_case")]
 pub enum ModuleEvent {
     SugInfo,
-    Indicators { timeframes: Vec<i64> },
+    Indicators {
+        timeframes: Vec<i64>,
+    },
     Signal,
     NewPosition {
         direction: Direction,

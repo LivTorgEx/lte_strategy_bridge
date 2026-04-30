@@ -156,7 +156,10 @@ pub struct IndicatorFieldKey {
 pub type IndicatorSnapshot =
     BTreeMap<i64, Vec<HashMap<String, HashMap<String, ModuleIndicatorValue>>>>;
 
-pub fn get_value(indicators: &IndicatorSnapshot, key: IndicatorFieldKey) -> Option<&ModuleIndicatorValue> {
+pub fn get_value(
+    indicators: &IndicatorSnapshot,
+    key: IndicatorFieldKey,
+) -> Option<&ModuleIndicatorValue> {
     indicators
         .get(&key.timeframe.as_i64())
         .and_then(|candles| candles.first())
