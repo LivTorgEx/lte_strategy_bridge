@@ -241,12 +241,35 @@ pub struct ModuleClosePosition {
     pub reason: String,
 }
 
+/// Amend fields of an already-open (or pending-limit) position.
+///
+/// Maps directly to the pro strategy `PositionStateChange::UpdateEnterPrice`
+/// / `SetTakeProfit` / `SetStopLoss` paths, which call `update_order_info()`
+/// on the exchange (amend-in-place, no cancel+replace).
+///
+/// All fields are optional — only non-`None` fields are applied.  If the
+/// position does not yet exist in storage the update is silently dropped
+/// (it cannot be applied before the exchange order is created).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModuleUpdatePosition {
+    pub direction: Direction,
+    /// New limit entry price.  Triggers an exchange order amendment.
+    pub enter_price: Option<f64>,
+    /// New take-profit price.
+    pub take_profit: Option<f64>,
+    /// New stop-loss price.
+    pub stop_loss: Option<f64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ModuleOutput {
     #[serde(default)]
     pub open_positions: Vec<ModuleOpenPosition>,
     #[serde(default)]
     pub close_positions: Vec<ModuleClosePosition>,
+    /// Amend fields of an existing pending or open position (no cancel+replace).
+    #[serde(default)]
+    pub update_positions: Vec<ModuleUpdatePosition>,
     /// Standing limit orders to create or update (matched by `mark`).
     #[serde(default)]
     pub place_orders: Vec<ModulePlaceOrder>,
