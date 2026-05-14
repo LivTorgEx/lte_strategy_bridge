@@ -217,6 +217,19 @@ fn default_order_type() -> String {
     "Market".to_string()
 }
 
+/// Side of a standing limit order emitted by a WASM module.
+///
+/// `Buy` (default) — entry / DCA order that increases the position.
+/// `Sell` — reduce-only partial-close order that decreases the position.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub enum ModuleOrderSide {
+    #[default]
+    #[serde(rename = "Buy")]
+    Buy,
+    #[serde(rename = "Sell")]
+    Sell,
+}
+
 /// A standing limit order placed by the module.
 ///
 /// `mark` is the unique stable identifier for this order — the platform uses it
@@ -233,6 +246,9 @@ pub struct ModulePlaceOrder {
     pub stop_loss: Option<f64>,
     /// Unique stable identifier — used to create or update the order.
     pub mark: String,
+    /// Order side: `Buy` (default, entry/DCA) or `Sell` (partial close, reduce-only).
+    #[serde(default)]
+    pub order_side: ModuleOrderSide,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
