@@ -246,9 +246,16 @@ pub struct ModulePlaceOrder {
     pub stop_loss: Option<f64>,
     /// Unique stable identifier — used to create or update the order.
     pub mark: String,
-    /// Order side: `Buy` (default, entry/DCA) or `Sell` (partial close, reduce-only).
+    /// Exchange order side (`Buy` default for entries, `Sell` to reduce a long,
+    /// `Buy` to reduce a short).
     #[serde(default)]
     pub order_side: ModuleOrderSide,
+    /// When `true` the order must only be applied to an already-open position
+    /// (reduce-only semantics).  It will never be buffered for a future position.
+    /// Use this for partial-close orders so the host does not accidentally
+    /// queue them as entry orders.
+    #[serde(default)]
+    pub reduce_only: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
