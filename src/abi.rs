@@ -134,6 +134,16 @@ pub enum ModuleEvent {
         fill_price: f64,
         filled_qty: f64,
     },
+    /// A user-triggered named action dispatched from the UI
+    /// (via `POST /bot/{id}/run_action`).  The module should react by
+    /// emitting `open_positions`, `close_positions`, or other output.
+    /// `values` carries any parameters the user filled in; it is empty
+    /// for parameter-less actions.
+    Action {
+        name: String,
+        #[serde(default)]
+        values: HashMap<String, serde_json::Value>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
