@@ -188,12 +188,32 @@ pub enum ModuleIndicatorCross {
     Below,
 }
 
+/// Trading rules for the current symbol, populated by the host from
+/// the symbol model.  All fields are optional so old modules continue
+/// to compile — use `unwrap_or_default()` / `unwrap_or(fallback)`.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ModuleSymbolInfo {
+    /// Minimum price increment (e.g. 0.00001 for PENGU-USDT-SWAP).
+    pub price_tick_size: f64,
+    /// Minimum quantity increment per order.
+    pub qty_step_size: f64,
+    /// Minimum notional value per order in quote currency (USD).
+    #[serde(default)]
+    pub min_notional: Option<f64>,
+    /// Minimum order quantity in contracts / coins.
+    #[serde(default)]
+    pub min_order_qty: Option<f64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleInput {
     pub event: ModuleEvent,
     pub price: f64,
     pub symbol: String,
     pub max_amount: f64,
+    /// Symbol trading rules (tick size, lot size, min notional, …).
+    #[serde(default)]
+    pub symbol_info: ModuleSymbolInfo,
     /// Effective maximum position size in USD after compounding realised PnL.
     /// Formula (mirrors pos_detection_pro):
     ///   `auto_max_amount = max_amount + realised_pnl * auto_max_amount_leverage`
