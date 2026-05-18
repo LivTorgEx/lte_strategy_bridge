@@ -234,7 +234,10 @@ pub struct ModuleInput {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleOpenPosition {
     pub direction: Direction,
-    pub amount_ratio: f64,
+    #[serde(default)]
+    pub amount: Option<f64>,
+    #[serde(default)]
+    pub qty: Option<f64>,
     pub enter_price: Option<f64>,
     #[serde(default = "default_order_type")]
     pub order_type: String,
@@ -269,7 +272,10 @@ pub enum ModuleOrderSide {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModulePlaceOrder {
     pub direction: Direction,
-    pub amount_ratio: f64,
+    #[serde(default)]
+    pub amount: Option<f64>,
+    #[serde(default)]
+    pub qty: Option<f64>,
     /// Limit price at which the order should be placed.
     pub enter_price: f64,
     pub take_profit: Option<f64>,
