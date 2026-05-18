@@ -340,4 +340,9 @@ pub struct ModuleOutput {
     pub state: Option<serde_json::Value>,
     #[serde(default)]
     pub debug: String,
+    /// Non-empty when the module encountered an error processing the event.
+    /// The host logs this at ERROR level.  The module should still return a
+    /// valid (possibly empty) output — this field is informational.
+    #[serde(default)]
+    pub error: String,
 }
