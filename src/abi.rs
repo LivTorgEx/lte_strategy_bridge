@@ -320,6 +320,11 @@ pub struct ModuleUpdatePosition {
     pub stop_loss: Option<f64>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ModuleAlert {
+    pub message: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ModuleOutput {
     #[serde(default)]
@@ -336,7 +341,7 @@ pub struct ModuleOutput {
     #[serde(default)]
     pub cancel_orders: Vec<String>,
     #[serde(default)]
-    pub alerts: Vec<String>,
+    pub alerts: Vec<ModuleAlert>,
     #[serde(default)]
     pub stop_bot: bool,
     pub state: Option<serde_json::Value>,

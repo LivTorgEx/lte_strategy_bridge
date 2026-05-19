@@ -3,8 +3,8 @@ pub mod indicator_access;
 pub mod sug_info;
 
 pub use abi::{
-    Direction, ModuleClosePosition, ModuleEvent, ModuleInput, ModuleOpenPosition, ModuleOutput,
-    ModulePlaceOrder, ModulePositionSummary, ModulePositions, OrderRole,
+    Direction, ModuleAlert, ModuleClosePosition, ModuleEvent, ModuleInput, ModuleOpenPosition,
+    ModuleOutput, ModulePlaceOrder, ModulePositionSummary, ModulePositions, OrderRole,
 };
 pub use indicator_access::{
     get_value, IndicatorField, IndicatorFieldKey, IndicatorKey, IndicatorSnapshot, TimeframeSec,
