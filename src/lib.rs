@@ -51,9 +51,8 @@ pub fn run_loop(mut handler: impl FnMut(ModuleInput) -> ModuleOutput) {
                 continue;
             }
         };
-        let output = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            handler(input)
-        })) {
+        let output = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| handler(input)))
+        {
             Ok(out) => out,
             Err(panic) => {
                 let msg = panic

@@ -336,6 +336,8 @@ pub struct ModuleOutput {
     #[serde(default)]
     pub cancel_orders: Vec<String>,
     #[serde(default)]
+    pub alerts: Vec<String>,
+    #[serde(default)]
     pub stop_bot: bool,
     pub state: Option<serde_json::Value>,
     #[serde(default)]
