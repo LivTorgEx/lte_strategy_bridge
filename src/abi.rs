@@ -133,6 +133,8 @@ pub enum ModuleEvent {
         status: String,
         fill_price: f64,
         filled_qty: f64,
+        #[serde(default)]
+        mark: Option<String>,
     },
     /// A user-triggered named action dispatched from the UI
     /// (via `POST /bot/{id}/run_action`).  The module should react by
