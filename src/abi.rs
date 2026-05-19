@@ -217,9 +217,7 @@ pub struct ModuleInput {
     #[serde(default)]
     pub symbol_info: ModuleSymbolInfo,
     /// Effective maximum position size in USD after compounding realised PnL.
-    /// Formula (mirrors pos_detection_pro):
-    ///   `auto_max_amount = max_amount + realised_pnl * auto_max_amount_leverage`
-    /// where `auto_max_amount_leverage` is set in the bot group settings.
+    /// Formula: `auto_max_amount = max_amount + realised_pnl * reinvest_percent * leverage`
     /// Falls back to `max_amount` when no PnL has been accumulated yet.
     #[serde(default)]
     pub auto_max_amount: f64,
