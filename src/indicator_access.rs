@@ -2,6 +2,8 @@ use std::collections::{BTreeMap, HashMap};
 
 use crate::abi::ModuleIndicatorValue;
 
+type CandleMap = HashMap<String, HashMap<String, ModuleIndicatorValue>>;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TimeframeSec {
     Tf1m = 60,
@@ -165,4 +167,85 @@ pub fn get_value(
         .and_then(|candles| candles.first())
         .and_then(|by_ind| by_ind.get(key.indicator.as_name()))
         .and_then(|fields| fields.get(key.field.as_name()))
+}
+
+/// Per-module indicator cache built from `Init` + incremental `Indicators` events.
+/// Default capacity is 10 (matches the host's ring buffer size).
+///
+/// Candles are stored newest-first (index 0 = most recent closed candle).
+///
+/// Typical usage:
+/// ```ignore
+/// match &input.event {
+///     ModuleEvent::Init       => history.init(&input.indicators),
+///     ModuleEvent::Indicators { timeframes } => history.update(&input.indicators, timeframes),
+///     _ => {}
+/// }
+/// let ema = history.get(IndicatorFieldKey { timeframe: TimeframeSec::Tf1h,
+///                                           indicator: IndicatorKey::Ema200,
+///                                           field: IndicatorField::Value });
+/// ```
+pub struct IndicatorHistory {
+    /// tf_seconds → candles, index 0 = newest
+    data: BTreeMap<i64, Vec<CandleMap>>,
+    capacity: usize,
+}
+
+impl Default for IndicatorHistory {
+    fn default() -> Self {
+        Self::new(10)
+    }
+}
+
+impl IndicatorHistory {
+    pub fn new(capacity: usize) -> Self {
+        Self {
+            data: BTreeMap::new(),
+            capacity,
+        }
+    }
+
+    /// Replace all history with the full snapshot sent on `ModuleEvent::Init`.
+    pub fn init(&mut self, snapshot: &IndicatorSnapshot) {
+        self.data.clear();
+        for (tf, candles) in snapshot {
+            self.data.insert(*tf, candles.clone());
+        }
+    }
+
+    /// Prepend the latest candle for each updated timeframe.
+    /// Called on `ModuleEvent::Indicators { timeframes }`.
+    /// `snapshot` contains only the updated TFs, each with a single-element Vec.
+    pub fn update(&mut self, snapshot: &IndicatorSnapshot, timeframes: &[i64]) {
+        for tf in timeframes {
+            let Some(new_candles) = snapshot.get(tf) else {
+                continue;
+            };
+            let Some(newest) = new_candles.first() else {
+                continue;
+            };
+            let entry = self.data.entry(*tf).or_default();
+            entry.insert(0, newest.clone());
+            entry.truncate(self.capacity);
+        }
+    }
+
+    /// Get a value from the most recent closed candle (`offset = 0`),
+    /// or a previous candle (`offset = 1` → one candle back, etc.).
+    pub fn get_prev(
+        &self,
+        key: IndicatorFieldKey,
+        offset: usize,
+    ) -> Option<&ModuleIndicatorValue> {
+        self.data
+            .get(&key.timeframe.as_i64())
+            .and_then(|candles| candles.get(offset))
+            .and_then(|by_ind| by_ind.get(key.indicator.as_name()))
+            .and_then(|fields| fields.get(key.field.as_name()))
+    }
+
+    /// Get a value from the most recent closed candle.
+    pub fn get(&self, key: IndicatorFieldKey) -> Option<&ModuleIndicatorValue> {
+        self.get_prev(key, 0)
+    }
 }

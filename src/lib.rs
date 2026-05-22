@@ -7,7 +7,8 @@ pub use abi::{
     ModuleOutput, ModulePlaceOrder, ModulePositionSummary, ModulePositions, OrderRole,
 };
 pub use indicator_access::{
-    get_value, IndicatorField, IndicatorFieldKey, IndicatorKey, IndicatorSnapshot, TimeframeSec,
+    get_value, IndicatorField, IndicatorFieldKey, IndicatorHistory, IndicatorKey, IndicatorSnapshot,
+    TimeframeSec,
 };
 pub use sug_info::{
     AlgoSuggestionTradeStatus, ModuleSugInfo, SugIndicator, SuggestionInfo, SuggestionInfoCandle,

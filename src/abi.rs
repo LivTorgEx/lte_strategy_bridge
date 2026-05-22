@@ -112,7 +112,13 @@ impl From<i32> for Direction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ModuleEvent {
+    /// Sent once immediately after the bridge spawns.
+    /// `indicators` contains the full history (up to 10 candles per timeframe).
+    /// The module should call `IndicatorHistory::init()` with this payload.
+    Init,
     SugInfo,
+    /// `indicators` contains only the **latest candle** for each updated timeframe.
+    /// The module should call `IndicatorHistory::update()` with this payload.
     Indicators {
         timeframes: Vec<i64>,
     },
