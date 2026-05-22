@@ -232,11 +232,7 @@ impl IndicatorHistory {
 
     /// Get a value from the most recent closed candle (`offset = 0`),
     /// or a previous candle (`offset = 1` → one candle back, etc.).
-    pub fn get_prev(
-        &self,
-        key: IndicatorFieldKey,
-        offset: usize,
-    ) -> Option<&ModuleIndicatorValue> {
+    pub fn get_prev(&self, key: IndicatorFieldKey, offset: usize) -> Option<&ModuleIndicatorValue> {
         self.data
             .get(&key.timeframe.as_i64())
             .and_then(|candles| candles.get(offset))
