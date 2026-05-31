@@ -122,7 +122,12 @@ pub enum ModuleEvent {
     Indicators {
         timeframes: Vec<i64>,
     },
-    Signal,
+    Signal {
+        direction: Direction,
+        code: String,
+        #[serde(default)]
+        values: HashMap<String, serde_json::Value>,
+    },
     NewPosition {
         direction: Direction,
         entry_price: f64,
