@@ -291,6 +291,11 @@ pub struct ModulePlaceOrder {
     pub enter_price: f64,
     pub take_profit: Option<f64>,
     pub stop_loss: Option<f64>,
+    /// Human-readable note attached to the order.
+    ///
+    /// Omit this field to leave the host note empty.
+    #[serde(default)]
+    pub note: Option<String>,
     /// Unique stable identifier — used to create or update the order.
     pub mark: String,
     /// Exchange order side (`Buy` default for entries, `Sell` to reduce a long,
