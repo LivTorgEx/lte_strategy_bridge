@@ -1,4 +1,8 @@
-use std::collections::{BTreeMap, HashMap};
+use std::{
+    collections::{BTreeMap, HashMap},
+    fmt,
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -109,6 +113,165 @@ impl From<i32> for Direction {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum ModuleOrderSide {
+    #[default]
+    #[serde(rename = "Buy")]
+    Buy,
+    #[serde(rename = "Sell")]
+    Sell,
+}
+
+impl ModuleOrderSide {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Buy => "Buy",
+            Self::Sell => "Sell",
+        }
+    }
+}
+
+impl fmt::Display for ModuleOrderSide {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl FromStr for ModuleOrderSide {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "Buy" => Ok(Self::Buy),
+            "Sell" => Ok(Self::Sell),
+            other => Err(format!("invalid ModuleOrderSide: {other}")),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum ModuleExchangeOrderSide {
+    #[default]
+    #[serde(rename = "BUY")]
+    Buy,
+    #[serde(rename = "SELL")]
+    Sell,
+}
+
+impl ModuleExchangeOrderSide {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Buy => "BUY",
+            Self::Sell => "SELL",
+        }
+    }
+}
+
+impl fmt::Display for ModuleExchangeOrderSide {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl FromStr for ModuleExchangeOrderSide {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "BUY" => Ok(Self::Buy),
+            "SELL" => Ok(Self::Sell),
+            other => Err(format!("invalid ModuleExchangeOrderSide: {other}")),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ModuleOrderStatus {
+    #[serde(rename = "New")]
+    New,
+    #[serde(rename = "PartiallyFilled")]
+    PartiallyFilled,
+    #[serde(rename = "Filled")]
+    Filled,
+    #[serde(rename = "Expired")]
+    Expired,
+    #[serde(rename = "Canceled")]
+    Canceled,
+    #[serde(rename = "PendingTrigger")]
+    PendingTrigger,
+}
+
+impl ModuleOrderStatus {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::New => "New",
+            Self::PartiallyFilled => "PartiallyFilled",
+            Self::Filled => "Filled",
+            Self::Expired => "Expired",
+            Self::Canceled => "Canceled",
+            Self::PendingTrigger => "PendingTrigger",
+        }
+    }
+}
+
+impl fmt::Display for ModuleOrderStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl FromStr for ModuleOrderStatus {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "New" => Ok(Self::New),
+            "PartiallyFilled" => Ok(Self::PartiallyFilled),
+            "Filled" => Ok(Self::Filled),
+            "Expired" => Ok(Self::Expired),
+            "Canceled" => Ok(Self::Canceled),
+            "PendingTrigger" => Ok(Self::PendingTrigger),
+            other => Err(format!("invalid ModuleOrderStatus: {other}")),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+pub enum ModuleOrderType {
+    #[default]
+    #[serde(rename = "Market")]
+    Market,
+    #[serde(rename = "Limit")]
+    Limit,
+}
+
+impl ModuleOrderType {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Market => "Market",
+            Self::Limit => "Limit",
+        }
+    }
+}
+
+impl fmt::Display for ModuleOrderType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl FromStr for ModuleOrderType {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "Market" => Ok(Self::Market),
+            "Limit" => Ok(Self::Limit),
+            other => Err(format!("invalid ModuleOrderType: {other}")),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ModuleEvent {
@@ -139,9 +302,9 @@ pub enum ModuleEvent {
     },
     OrderUpdate {
         direction: Direction,
-        order_side: String,
+        order_side: ModuleExchangeOrderSide,
         role: OrderRole,
-        status: String,
+        status: ModuleOrderStatus,
         fill_price: f64,
         filled_qty: f64,
         #[serde(default)]
@@ -186,9 +349,25 @@ pub struct ModulePositions {
 #[serde(untagged)]
 pub enum ModuleIndicatorValue {
     Float(f64),
+    /// Raw string value emitted by indicator data or suggestion metadata.
+    /// Use [`ModuleIndicatorValue::as_str`] and [`ModuleIndicatorValue::parse`]
+    /// to convert it into a typed enum.
     String(String),
     Direction(Direction),
     Cross(ModuleIndicatorCross),
+}
+
+impl ModuleIndicatorValue {
+    pub fn as_str(&self) -> Option<&str> {
+        match self {
+            Self::String(value) => Some(value.as_str()),
+            _ => None,
+        }
+    }
+
+    pub fn parse<T: FromStr>(&self) -> Option<T> {
+        self.as_str()?.parse().ok()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -250,28 +429,11 @@ pub struct ModuleOpenPosition {
     #[serde(default)]
     pub qty: Option<f64>,
     pub enter_price: Option<f64>,
-    #[serde(default = "default_order_type")]
-    pub order_type: String,
+    #[serde(default)]
+    pub order_type: ModuleOrderType,
     pub take_profit: Option<f64>,
     pub stop_loss: Option<f64>,
     pub note: String,
-}
-
-fn default_order_type() -> String {
-    "Market".to_string()
-}
-
-/// Side of a standing limit order emitted by a WASM module.
-///
-/// `Buy` (default) — entry / DCA order that increases the position.
-/// `Sell` — reduce-only partial-close order that decreases the position.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub enum ModuleOrderSide {
-    #[default]
-    #[serde(rename = "Buy")]
-    Buy,
-    #[serde(rename = "Sell")]
-    Sell,
 }
 
 /// A standing limit order placed by the module.
@@ -368,4 +530,59 @@ pub struct ModuleOutput {
     /// valid (possibly empty) output — this field is informational.
     #[serde(default)]
     pub error: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn module_indicator_value_string_parse_helpers() {
+        let value = ModuleIndicatorValue::String("Filled".to_string());
+
+        assert_eq!(value.as_str(), Some("Filled"));
+        assert_eq!(
+            value.parse::<ModuleOrderStatus>(),
+            Some(ModuleOrderStatus::Filled)
+        );
+        assert_eq!(value.parse::<ModuleOrderType>(), None);
+    }
+
+    #[test]
+    fn module_open_position_order_type_deserializes_exact_value() {
+        let json = r#"{
+            "direction":"LONG",
+            "amount":1.0,
+            "qty":null,
+            "enter_price":null,
+            "order_type":"Limit",
+            "take_profit":null,
+            "stop_loss":null,
+            "note":"n"
+        }"#;
+
+        let position: ModuleOpenPosition = serde_json::from_str(json).unwrap();
+
+        assert_eq!(position.order_type, ModuleOrderType::Limit);
+        assert_eq!(position.order_type.as_str(), "Limit");
+    }
+
+    #[test]
+    fn module_order_update_serializes_typed_fields() {
+        let event = ModuleEvent::OrderUpdate {
+            direction: Direction::Long,
+            order_side: ModuleExchangeOrderSide::Buy,
+            role: OrderRole::Entry,
+            status: ModuleOrderStatus::Filled,
+            fill_price: 1.23,
+            filled_qty: 4.56,
+            mark: Some("m1".to_string()),
+        };
+
+        let json = serde_json::to_string(&event).unwrap();
+
+        assert!(json.contains(r#""order_update""#));
+        assert!(json.contains(r#""order_side":"BUY""#));
+        assert!(json.contains(r#""status":"Filled""#));
+    }
 }

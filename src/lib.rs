@@ -3,8 +3,9 @@ pub mod indicator_access;
 pub mod sug_info;
 
 pub use abi::{
-    Direction, ModuleAlert, ModuleClosePosition, ModuleEvent, ModuleInput, ModuleOpenPosition,
-    ModuleOutput, ModulePlaceOrder, ModulePositionSummary, ModulePositions, OrderRole,
+    Direction, ModuleAlert, ModuleClosePosition, ModuleEvent, ModuleExchangeOrderSide, ModuleInput,
+    ModuleOpenPosition, ModuleOrderSide, ModuleOrderStatus, ModuleOrderType, ModuleOutput,
+    ModulePlaceOrder, ModulePositionSummary, ModulePositions, OrderRole,
 };
 pub use indicator_access::{
     get_value, IndicatorField, IndicatorFieldKey, IndicatorHistory, IndicatorKey,
