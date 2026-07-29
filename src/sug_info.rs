@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use lte_exchange::schemas::exchange::SymbolKey;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize};
 
 use crate::abi::Direction;
@@ -180,7 +181,7 @@ pub struct SuggestionInfo {
     pub system_time: i64,
     pub symbol: String,
     pub symbol_id: i32,
-    pub symbol_key: String,
+    pub symbol_key: SymbolKey,
     pub status: AlgoSuggestionTradeStatus,
     pub price: f64,
     pub candle: SuggestionInfoCandle,
