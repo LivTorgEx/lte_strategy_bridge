@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use lte_exchange::schemas::exchange::SymbolKey;
+use ltx_schemas::SymbolKey;
 use serde::{de::Error as _, Deserialize, Deserializer, Serialize};
 
 use crate::abi::Direction;
