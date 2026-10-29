@@ -1,21 +1,16 @@
 pub mod abi;
 pub mod indicator_access;
-pub mod sug_info;
 
 pub use abi::{
     Direction, ModuleAlert, ModuleClosePosition, ModuleEvent, ModuleExchangeOrderSide, ModuleInput,
-    ModuleOpenPosition, ModuleOrderSide, ModuleOrderStatus, ModuleOrderType, ModuleOutput,
-    ModulePlaceOrder, ModulePositionSummary, ModulePositions, ModuleSymbolInfo,
-    ModuleUpdatePosition, OrderRole,
+    ModuleMarketCandle, ModuleMarketDecision, ModuleMarketOpenInterest, ModuleMarketOrderBook,
+    ModuleMarketOrderBookLevel, ModuleOpenPosition, ModuleOrderSide, ModuleOrderStatus,
+    ModuleOrderType, ModuleOutput, ModulePlaceOrder, ModulePositionSummary, ModulePositions,
+    ModuleSymbolInfo, ModuleUpdatePosition, OrderRole,
 };
 pub use indicator_access::{
     get_value, IndicatorField, IndicatorFieldKey, IndicatorHistory, IndicatorKey,
     IndicatorSnapshot, TimeframeSec,
-};
-pub use sug_info::{
-    AlgoSuggestionTradeStatus, ModuleSugInfo, SugIndicator, SuggestionInfo, SuggestionInfoCandle,
-    SuggestionInfoIndicator, SuggestionInfoOpenInterest, SuggestionInfoOrderBook,
-    SuggestionInfoOrderBookLevel, SuggestionKline,
 };
 
 /// Run a persistent stdin/stdout loop.

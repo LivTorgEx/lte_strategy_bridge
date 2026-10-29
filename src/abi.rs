@@ -6,8 +6,6 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::sug_info::SuggestionInfo;
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Direction {
     #[serde(rename = "LONG")]
@@ -279,12 +277,14 @@ pub enum ModuleEvent {
     /// `indicators` contains the full history (up to 10 candles per timeframe).
     /// The module should call `IndicatorHistory::init()` with this payload.
     Init,
-    SugInfo,
     /// `indicators` contains only the **latest candle** for each updated timeframe.
     /// The module should call `IndicatorHistory::update()` with this payload.
     Indicators {
         timeframes: Vec<i64>,
     },
+    /// A new public market-decision snapshot is available in
+    /// `ModuleInput::market_decision`.
+    MarketDecision,
     Signal {
         direction: Direction,
         code: String,
@@ -397,10 +397,76 @@ pub struct ModuleSymbolInfo {
     pub min_order_qty: Option<f64>,
 }
 
+/// Lightweight WASM ABI representation of the platform market-decision
+/// contract. These local wire types keep strategy modules independent of the
+/// host's market-decision service dependencies.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModuleMarketDecision {
+    pub time: i64,
+    #[serde(default)]
+    pub system_time: i64,
+    pub symbol_key: String,
+    pub price: f64,
+    pub candle: ModuleMarketCandle,
+    #[serde(default)]
+    pub fc: Option<ModuleMarketCandle>,
+    #[serde(default)]
+    pub ntp_5s: i64,
+    #[serde(default)]
+    pub tdt: Option<i64>,
+    #[serde(default)]
+    pub order_book: Option<ModuleMarketOrderBook>,
+    #[serde(default)]
+    pub oi: Option<ModuleMarketOpenInterest>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct ModuleMarketCandle {
+    pub min: f64,
+    pub max: f64,
+    pub enter: f64,
+    pub exit: f64,
+    pub qty: f64,
+    pub asset: f64,
+    pub qtym: f64,
+    pub masset: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModuleMarketOrderBookLevel {
+    pub price: f64,
+    pub quantity: f64,
+    pub total_amount: f64,
+    pub filled: Option<f64>,
+    pub time_start: i64,
+    pub duration: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModuleMarketOrderBook {
+    pub asks: Vec<ModuleMarketOrderBookLevel>,
+    pub bids: Vec<ModuleMarketOrderBookLevel>,
+    pub ask_amount: f64,
+    pub ask_price: Option<f64>,
+    pub bid_amount: f64,
+    pub bid_price: Option<f64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModuleMarketOpenInterest {
+    pub usd: f64,
+    pub change: f64,
+    pub change_qty: f64,
+    pub avg: f64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleInput {
     pub event: ModuleEvent,
     pub price: f64,
+    /// Latest market-decision snapshot. Older hosts can omit this field.
+    #[serde(default)]
+    pub market_decision: Option<ModuleMarketDecision>,
     pub symbol: String,
     pub max_amount: f64,
     /// Symbol trading rules (tick size, lot size, min notional, …).
@@ -417,7 +483,6 @@ pub struct ModuleInput {
     /// Values preserve original indicator formats (float/string/enums).
     pub indicators: BTreeMap<i64, Vec<HashMap<String, HashMap<String, ModuleIndicatorValue>>>>,
     pub positions: ModulePositions,
-    pub sug_info: Option<SuggestionInfo>,
     pub state: Option<serde_json::Value>,
 }
 
