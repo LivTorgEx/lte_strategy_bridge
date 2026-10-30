@@ -6,6 +6,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+pub const MODULE_ABI_VERSION: u32 = 2;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Direction {
     #[serde(rename = "LONG")]
@@ -273,10 +275,19 @@ impl FromStr for ModuleOrderType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ModuleEvent {
+    /// Sent once after the WASM process starts so it can declare the
+    /// historical kline data required before normal initialization.
+    Requirements,
     /// Sent once immediately after the bridge spawns.
     /// `indicators` contains the full history (up to 10 candles per timeframe).
     /// The module should call `IndicatorHistory::init()` with this payload.
     Init,
+    /// A newly closed kline is available for the listed timeframes. The
+    /// `klines` field contains only the new rows; modules can apply them to
+    /// `KlineHistory` without receiving the full history on every update.
+    KlineUpdate {
+        timeframes: Vec<i32>,
+    },
     /// `indicators` contains only the **latest candle** for each updated timeframe.
     /// The module should call `IndicatorHistory::update()` with this payload.
     Indicators {
@@ -460,6 +471,77 @@ pub struct ModuleMarketOpenInterest {
     pub avg: f64,
 }
 
+/// Normalized OHLCV kline passed to a strategy module. `time` is the candle
+/// open timestamp in milliseconds since the Unix epoch.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModuleKline {
+    pub time: i64,
+    pub open: f64,
+    pub high: f64,
+    pub low: f64,
+    pub close: f64,
+    pub qty_buy: f64,
+    pub qty_sell: f64,
+    pub asset_buy: f64,
+    pub asset_sell: f64,
+}
+
+/// Timeframe seconds -> candles ordered oldest to newest.
+pub type ModuleKlineSnapshot = BTreeMap<i32, Vec<ModuleKline>>;
+
+/// Data requested by a module during the `Requirements` handshake.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ModuleDataRequirements {
+    /// ABI understood by the module during this handshake.
+    pub abi_version: u32,
+    /// Timeframe seconds -> number of most recent klines required.
+    pub klines: BTreeMap<i32, u32>,
+}
+
+impl Default for ModuleDataRequirements {
+    fn default() -> Self {
+        Self {
+            abi_version: MODULE_ABI_VERSION,
+            klines: BTreeMap::new(),
+        }
+    }
+}
+
+impl ModuleDataRequirements {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.abi_version != MODULE_ABI_VERSION {
+            return Err(format!(
+                "module ABI version {} is unsupported; host requires {}",
+                self.abi_version, MODULE_ABI_VERSION
+            ));
+        }
+        let mut requested_bytes = 0usize;
+        for (timeframe_seconds, count) in &self.klines {
+            if *timeframe_seconds < 60
+                || *timeframe_seconds > 86_400
+                || *timeframe_seconds % 60 != 0
+            {
+                return Err(format!(
+                    "unsupported kline timeframe {timeframe_seconds}; expected a whole number of minutes up to 24 hours"
+                ));
+            }
+            if *count == 0 || *count > 5_000 {
+                return Err(format!(
+                    "kline count for timeframe {timeframe_seconds} must be between 1 and 5000"
+                ));
+            }
+            requested_bytes = requested_bytes
+                .checked_add(*count as usize * std::mem::size_of::<ModuleKline>())
+                .ok_or_else(|| "kline request size overflowed".to_owned())?;
+        }
+        if requested_bytes > 100 * 1024 * 1024 {
+            return Err("module kline request exceeds the 100 MiB cache budget".to_owned());
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleInput {
     pub event: ModuleEvent,
@@ -482,6 +564,11 @@ pub struct ModuleInput {
     /// [indicator_name → [field → typed value]]
     /// Values preserve original indicator formats (float/string/enums).
     pub indicators: BTreeMap<i64, Vec<HashMap<String, HashMap<String, ModuleIndicatorValue>>>>,
+    /// Requested timeframe seconds -> klines ordered oldest to newest. Init
+    /// receives the full requested history; KlineUpdate receives only rows
+    /// added or revised since the previous update.
+    #[serde(default)]
+    pub klines: ModuleKlineSnapshot,
     pub positions: ModulePositions,
     pub state: Option<serde_json::Value>,
 }
@@ -588,6 +675,9 @@ pub struct ModuleOutput {
     #[serde(default)]
     pub stop_bot: bool,
     pub state: Option<serde_json::Value>,
+    /// Kline history requested by the module during `Requirements`.
+    #[serde(default)]
+    pub data_requirements: ModuleDataRequirements,
     #[serde(default)]
     pub debug: String,
     /// Non-empty when the module encountered an error processing the event.

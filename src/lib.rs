@@ -1,9 +1,12 @@
 pub mod abi;
 pub mod indicator_access;
+pub mod kline_access;
 
+pub use abi::MODULE_ABI_VERSION;
 pub use abi::{
-    Direction, ModuleAlert, ModuleClosePosition, ModuleEvent, ModuleExchangeOrderSide, ModuleInput,
-    ModuleMarketCandle, ModuleMarketDecision, ModuleMarketOpenInterest, ModuleMarketOrderBook,
+    Direction, ModuleAlert, ModuleClosePosition, ModuleDataRequirements, ModuleEvent,
+    ModuleExchangeOrderSide, ModuleInput, ModuleKline, ModuleKlineSnapshot, ModuleMarketCandle,
+    ModuleMarketDecision, ModuleMarketOpenInterest, ModuleMarketOrderBook,
     ModuleMarketOrderBookLevel, ModuleOpenPosition, ModuleOrderSide, ModuleOrderStatus,
     ModuleOrderType, ModuleOutput, ModulePlaceOrder, ModulePositionSummary, ModulePositions,
     ModuleSymbolInfo, ModuleUpdatePosition, OrderRole,
@@ -12,6 +15,7 @@ pub use indicator_access::{
     get_value, IndicatorField, IndicatorFieldKey, IndicatorHistory, IndicatorKey,
     IndicatorSnapshot, TimeframeSec,
 };
+pub use kline_access::KlineHistory;
 
 /// Run a persistent stdin/stdout loop.
 ///
