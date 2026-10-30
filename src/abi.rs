@@ -278,9 +278,9 @@ pub enum ModuleEvent {
     /// Sent once after the WASM process starts so it can declare the
     /// historical kline data required before normal initialization.
     Requirements,
-    /// Sent once immediately after the bridge spawns.
-    /// `indicators` contains the full history (up to 10 candles per timeframe).
-    /// The module should call `IndicatorHistory::init()` with this payload.
+    /// Sent once after requested data has been prepared. `klines` and
+    /// `internal_indicators` contain the requested histories. Modules calculate
+    /// TA privately from klines; the host does not calculate dynamic indicators.
     Init,
     /// A newly closed kline is available for the listed timeframes. The
     /// `klines` field contains only the new rows; modules can apply them to
@@ -288,9 +288,18 @@ pub enum ModuleEvent {
     KlineUpdate {
         timeframes: Vec<i32>,
     },
-    /// `indicators` contains only the **latest candle** for each updated timeframe.
-    /// The module should call `IndicatorHistory::update()` with this payload.
+    /// Reserved for future module-requested dynamic indicators. Unlike
+    /// `InternalIndicators`, this event is not for fixed platform schemas.
+    /// The host does not currently emit it.
     Indicators {
+        timeframes: Vec<i64>,
+    },
+    /// Incremental update from the platform's internal, well-known indicators,
+    /// carried in `ModuleInput::internal_indicators`. Only new or revised
+    /// requested records are sent. These have fixed typed schemas; for example,
+    /// NTPS has value/min/max fields. This is separate from future dynamic
+    /// module-requested `Indicators`.
+    InternalIndicators {
         timeframes: Vec<i64>,
     },
     /// A new public market-decision snapshot is available in
@@ -489,7 +498,40 @@ pub struct ModuleKline {
 /// Timeframe seconds -> candles ordered oldest to newest.
 pub type ModuleKlineSnapshot = BTreeMap<i32, Vec<ModuleKline>>;
 
+/// Fixed schema for the platform's known NTPS indicator.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InternalIndicator {
+    Ntps { value: f64, min: f64, max: f64 },
+}
+
+/// Fixed platform indicator kinds that modules may request.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum InternalIndicatorKind {
+    Ntps,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ModuleInternalIndicatorRecord {
+    /// Aggregation timestamp in milliseconds since the Unix epoch.
+    pub time: i64,
+    pub indicator: InternalIndicator,
+}
+
+/// Timeframe seconds -> internal indicator records, oldest to newest.
+pub type ModuleInternalIndicatorSnapshot = BTreeMap<i64, Vec<ModuleInternalIndicatorRecord>>;
+
+/// Fixed internal indicator kind -> timeframe seconds -> required record count.
+pub type ModuleInternalIndicatorRequirements = BTreeMap<InternalIndicatorKind, BTreeMap<i64, u32>>;
+
 /// Data requested by a module during the `Requirements` handshake.
+///
+/// Modules currently request klines and calculate technical indicators
+/// privately with their TA library. Well-known platform indicators use the
+/// separate `InternalIndicators` event and fixed schemas. A future dynamic
+/// `Indicators` feature should use an explicit typed request with timeframe
+/// and calculation parameters (for example, MRC settings).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ModuleDataRequirements {
@@ -497,6 +539,9 @@ pub struct ModuleDataRequirements {
     pub abi_version: u32,
     /// Timeframe seconds -> number of most recent klines required.
     pub klines: BTreeMap<i32, u32>,
+    /// Fixed platform indicator -> timeframe seconds -> required record count.
+    #[serde(default)]
+    pub internal_indicators: ModuleInternalIndicatorRequirements,
 }
 
 impl Default for ModuleDataRequirements {
@@ -504,6 +549,7 @@ impl Default for ModuleDataRequirements {
         Self {
             abi_version: MODULE_ABI_VERSION,
             klines: BTreeMap::new(),
+            internal_indicators: BTreeMap::new(),
         }
     }
 }
@@ -535,8 +581,30 @@ impl ModuleDataRequirements {
                 .checked_add(*count as usize * std::mem::size_of::<ModuleKline>())
                 .ok_or_else(|| "kline request size overflowed".to_owned())?;
         }
+        for timeframes in self.internal_indicators.values() {
+            for (timeframe_seconds, count) in timeframes {
+                if *timeframe_seconds < 60
+                    || *timeframe_seconds > 86_400
+                    || *timeframe_seconds % 60 != 0
+                {
+                    return Err(format!(
+                        "unsupported internal-indicator timeframe {timeframe_seconds}; expected a whole number of minutes up to 24 hours"
+                    ));
+                }
+                if *count == 0 || *count > 5_000 {
+                    return Err(format!(
+                        "internal-indicator count for timeframe {timeframe_seconds} must be between 1 and 5000"
+                    ));
+                }
+                requested_bytes = requested_bytes
+                    .checked_add(
+                        *count as usize * std::mem::size_of::<ModuleInternalIndicatorRecord>(),
+                    )
+                    .ok_or_else(|| "module data request size overflowed".to_owned())?;
+            }
+        }
         if requested_bytes > 100 * 1024 * 1024 {
-            return Err("module kline request exceeds the 100 MiB cache budget".to_owned());
+            return Err("module data request exceeds the 100 MiB cache budget".to_owned());
         }
         Ok(())
     }
@@ -560,10 +628,13 @@ pub struct ModuleInput {
     #[serde(default)]
     pub auto_max_amount: f64,
     pub leverage: i32,
-    /// Indicators: tf_seconds → [all_candles] where each candle is
-    /// [indicator_name → [field → typed value]]
-    /// Values preserve original indicator formats (float/string/enums).
+    /// Payload for the future dynamic `ModuleEvent::Indicators` feature.
+    /// Current bot and backtest hosts leave it empty.
     pub indicators: BTreeMap<i64, Vec<HashMap<String, HashMap<String, ModuleIndicatorValue>>>>,
+    /// Typed, well-known platform indicator data. Init receives the requested
+    /// history; InternalIndicators events receive only new or revised records.
+    #[serde(default)]
+    pub internal_indicators: ModuleInternalIndicatorSnapshot,
     /// Requested timeframe seconds -> klines ordered oldest to newest. Init
     /// receives the full requested history; KlineUpdate receives only rows
     /// added or revised since the previous update.

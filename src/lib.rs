@@ -4,8 +4,10 @@ pub mod kline_access;
 
 pub use abi::MODULE_ABI_VERSION;
 pub use abi::{
-    Direction, ModuleAlert, ModuleClosePosition, ModuleDataRequirements, ModuleEvent,
-    ModuleExchangeOrderSide, ModuleInput, ModuleKline, ModuleKlineSnapshot, ModuleMarketCandle,
+    Direction, InternalIndicator, InternalIndicatorKind, ModuleAlert, ModuleClosePosition,
+    ModuleDataRequirements, ModuleEvent, ModuleExchangeOrderSide, ModuleInput,
+    ModuleInternalIndicatorRecord, ModuleInternalIndicatorRequirements,
+    ModuleInternalIndicatorSnapshot, ModuleKline, ModuleKlineSnapshot, ModuleMarketCandle,
     ModuleMarketDecision, ModuleMarketOpenInterest, ModuleMarketOrderBook,
     ModuleMarketOrderBookLevel, ModuleOpenPosition, ModuleOrderSide, ModuleOrderStatus,
     ModuleOrderType, ModuleOutput, ModulePlaceOrder, ModulePositionSummary, ModulePositions,
