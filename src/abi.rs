@@ -315,6 +315,12 @@ pub enum ModuleEvent {
         direction: Direction,
         entry_price: f64,
         qty: f64,
+        /// Take-profit price attached to the filled entry order, when present.
+        #[serde(default)]
+        take_profit: Option<f64>,
+        /// Stop-loss price attached to the filled entry order, when present.
+        #[serde(default)]
+        stop_loss: Option<f64>,
     },
     FinishPosition {
         direction: Direction,
