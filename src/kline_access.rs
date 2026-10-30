@@ -47,6 +47,7 @@ impl KlineHistory {
             let history = self.data.entry(*timeframe).or_default();
             for row in rows {
                 match history.back() {
+                    None => history.push_back(row.clone()),
                     Some(last) if row.time > last.time => history.push_back(row.clone()),
                     Some(last) if row.time == last.time => {
                         if let Some(last) = history.back_mut() {
